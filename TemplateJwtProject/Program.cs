@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+
 // Database configuratie
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -24,7 +25,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
-    
+
     // User settings
     options.User.RequireUniqueEmail = true;
 })
@@ -74,23 +75,32 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+//builder.Services.AddControllers();
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();  // required for Swagger
+builder.Services.AddSwaggerGen();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 // Initialiseer rollen
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await RoleInitializer.InitializeAsync(services);
-}
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    RoleInitializer.InitializeAsync(services)
+//}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    //app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        c.RoutePrefix = string.Empty; // loads Swagger at root
+    });
 }
 
 app.UseHttpsRedirection();
