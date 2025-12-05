@@ -8,6 +8,10 @@
       "applicationUrl": "http://localhost:5237",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
+
+        //"http": //top2000api.runasp.net/
+        //"http": //localhost:5237
+        //https://localhost:7003;http://localhost:5237
       }
     },
     "https": {
