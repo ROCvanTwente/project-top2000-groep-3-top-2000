@@ -9,6 +9,16 @@ namespace TemplateJwtProject.Controllers;
 [Authorize]
 public class TestController : ControllerBase
 {
+    [HttpGet]
+    public IActionResult Get()
+    {
+        return Ok(new
+        {
+            message = "API is working",
+            timestamp = DateTime.UtcNow
+        });
+    }
+
     [HttpGet("user")]
     [Authorize(Roles = Roles.User)]
     public IActionResult UserEndpoint()
@@ -32,9 +42,9 @@ public class TestController : ControllerBase
             .Select(c => c.Value)
             .ToList();
 
-        return Ok(new 
-        { 
-            message = "This endpoint is accessible by Users or Admins", 
+        return Ok(new
+        {
+            message = "This endpoint is accessible by Users or Admins",
             user = User.Identity?.Name,
             roles = roles
         });
