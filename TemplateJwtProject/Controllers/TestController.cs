@@ -6,7 +6,7 @@ namespace TemplateJwtProject.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class TestController : ControllerBase
 {
     [HttpGet]
