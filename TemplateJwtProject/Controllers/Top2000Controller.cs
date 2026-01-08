@@ -30,7 +30,8 @@ public class Top2000Controller : ControllerBase
             .Select(t => new Top2000EntryDto
             {
                 Position = t.Position,
-                Titel = t.Song!.Titel,
+                SongId = t.Song!.SongId,
+                Titel = t.Song.Titel,
                 Artist = t.Song.Artist!.Name
             })
             .ToList();
@@ -57,7 +58,8 @@ public class Top2000Controller : ControllerBase
             .Select(t => new Top2000EntryDto
             {
                 Position = t.Position,
-                Titel = t.Song!.Titel,
+                SongId = t.Song!.SongId,
+                Titel = t.Song.Titel,
                 Artist = t.Song.Artist!.Name
             })
             .ToList();
@@ -83,7 +85,8 @@ public class Top2000Controller : ControllerBase
             .Where(t => t.Position == position && t.Year == year)
             .Select(t => new Top2000EntryDto
             {
-                Position = t.Position,
+                SongId = t.Song!.SongId,
+                Titel = t.Songsition,
                 Titel = t.Song!.Titel,
                 Artist = t.Song.Artist!.Name
             })
