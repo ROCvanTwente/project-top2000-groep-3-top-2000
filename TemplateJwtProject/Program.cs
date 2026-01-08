@@ -92,16 +92,16 @@ var app = builder.Build();
 //}
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+// if (app.Environment.IsDevelopment())
+// {
     //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("http://localhost:7003/swagger/v1/swagger.json", "Top2000API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Top2000API V1");
         c.RoutePrefix = string.Empty; // loads Swagger at root
     });
-}
+// }
 
 app.UseHttpsRedirection();
 
