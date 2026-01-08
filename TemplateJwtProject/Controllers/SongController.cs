@@ -36,23 +36,43 @@ public class SongController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a specific song by ID
+    /// Gets songs with lyrics
     /// </summary>
-    /// <param name="id">The song ID</param>
-    /// <returns>Song details with artist information</returns>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Song>> GetSongById(int id)
+    /// <returns>List of all songs that have lyrics</returns>
+    [HttpGet("with-lyrics")]
+    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithLyrics()
     {
-        var song = await _context.Songs
+        var songs = await _context.Songs
             .Include(s => s.Artist)
-            .FirstOrDefaultAsync(s => s.SongId == id);
+            .Where(s => s.Lyrics != null && s.Lyrics != "")
+            .ToListAsync();
 
-        if (song == null)
+        if (!songs.Any())
         {
-            return NotFound(new { message = $"Song with ID {id} not found" });
+            return NotFound(new { message = "No songs with lyrics found" });
         }
 
-        return Ok(song);
+        return Ok(songs);
+    }
+
+    /// <summary>
+    /// Gets songs with YouTube links
+    /// </summary>
+    /// <returns>List of all songs that have YouTube links</returns>
+    [HttpGet("with-youtube")]
+    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithYoutube()
+    {
+        var songs = await _context.Songs
+            .Include(s => s.Artist)
+            .Where(s => s.Youtube != null && s.Youtube != "")
+            .ToListAsync();
+
+        if (!songs.Any())
+        {
+            return NotFound(new { message = "No songs with YouTube links found" });
+        }
+
+        return Ok(songs);
     }
 
     /// <summary>
@@ -125,43 +145,23 @@ public class SongController : ControllerBase
     }
 
     /// <summary>
-    /// Gets songs with lyrics
+    /// Gets a specific song by ID
     /// </summary>
-    /// <returns>List of all songs that have lyrics</returns>
-    [HttpGet("with-lyrics")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithLyrics()
+    /// <param name="id">The song ID</param>
+    /// <returns>Song details with artist information</returns>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Song>> GetSongById(int id)
     {
-        var songs = await _context.Songs
+        var song = await _context.Songs
             .Include(s => s.Artist)
-            .Where(s => s.Lyrics != null && s.Lyrics != "")
-            .ToListAsync();
+            .FirstOrDefaultAsync(s => s.SongId == id);
 
-        if (!songs.Any())
+        if (song == null)
         {
-            return NotFound(new { message = "No songs with lyrics found" });
+            return NotFound(new { message = $"Song with ID {id} not found" });
         }
 
-        return Ok(songs);
-    }
-
-    /// <summary>
-    /// Gets songs with YouTube links
-    /// </summary>
-    /// <returns>List of all songs that have YouTube links</returns>
-    [HttpGet("with-youtube")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithYoutube()
-    {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.Youtube != null && s.Youtube != "")
-            .ToListAsync();
-
-        if (!songs.Any())
-        {
-            return NotFound(new { message = "No songs with YouTube links found" });
-        }
-
-        return Ok(songs);
+        return Ok(song);
     }
 
     /// <summary>
@@ -187,3 +187,4 @@ public class SongController : ControllerBase
         return Ok(new { songId = song.SongId, titel = song.Titel, lyrics = song.Lyrics });
     }
 }
+
