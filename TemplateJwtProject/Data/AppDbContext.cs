@@ -30,14 +30,24 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasIndex(rt => rt.Token)
             .IsUnique();
 
-        // Song configuratie
+        // Artist configuratie - map to existing table
+        builder.Entity<Artist>()
+            .ToTable("Artist");
+
+        // Song configuratie - map to existing table
+        builder.Entity<Song>()
+            .ToTable("Songs");
+        
         builder.Entity<Song>()
             .HasOne(s => s.Artist)
             .WithMany(a => a.Songs)
             .HasForeignKey(s => s.ArtistId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Top2000Entry configuratie
+        // Top2000Entry configuratie - map to existing table
+        builder.Entity<Top2000Entry>()
+            .ToTable("Top2000Entries");
+        
         builder.Entity<Top2000Entry>()
             .HasOne(t => t.Song)
             .WithMany(s => s.Top2000Entries)
