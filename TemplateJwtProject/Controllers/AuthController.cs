@@ -5,6 +5,7 @@ using TemplateJwtProject.Constants;
 using TemplateJwtProject.Models;
 using TemplateJwtProject.Models.DTOs;
 using TemplateJwtProject.Services;
+using System.Linq;
 
 namespace TemplateJwtProject.Controllers;
 
@@ -18,6 +19,7 @@ public class AuthController : ControllerBase
     private readonly IJwtService _jwtService;
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IConfiguration _configuration;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
@@ -25,7 +27,8 @@ public class AuthController : ControllerBase
         RoleManager<IdentityRole> roleManager,
         IJwtService jwtService,
         IRefreshTokenService refreshTokenService,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -33,6 +36,7 @@ public class AuthController : ControllerBase
         _jwtService = jwtService;
         _refreshTokenService = refreshTokenService;
         _logger = logger;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -67,13 +71,15 @@ public class AuthController : ControllerBase
         var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(user.Id);
         var roles = await _userManager.GetRolesAsync(user);
         
+        var expiryInMinutes = int.Parse(_configuration.GetSection("Jwt")["ExpiryInMinutes"] ?? "15");
+
         return Ok(new AuthResponseDto
         {
             Token = token,
             RefreshToken = refreshToken.Token,
             Email = user.Email ?? string.Empty,
             Roles = roles.ToList(),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryInMinutes)
         });
     }
 
@@ -102,13 +108,15 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("User {Email} logged in successfully with roles: {Roles}", model.Email, string.Join(", ", roles));
 
+        var expiryInMinutes = int.Parse(_configuration.GetSection("Jwt")["ExpiryInMinutes"] ?? "15");
+
         return Ok(new AuthResponseDto
         {
             Token = token,
             RefreshToken = refreshToken.Token,
             Email = user.Email ?? string.Empty,
             Roles = roles.ToList(),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryInMinutes)
         });
     }
 
@@ -140,13 +148,15 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("Refresh token used for user {Email}", user.Email);
 
+        var expiryInMinutes = int.Parse(_configuration.GetSection("Jwt")["ExpiryInMinutes"] ?? "15");
+
         return Ok(new AuthResponseDto
         {
             Token = newAccessToken,
             RefreshToken = newRefreshToken.Token,
             Email = user.Email ?? string.Empty,
             Roles = roles.ToList(),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryInMinutes)
         });
     }
 
