@@ -24,23 +24,30 @@ public class ArtistController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ArtistDto>>> GetAllArtists()
     {
-        var artists = await _context.Artists
-            .Select(a => new ArtistDto
-            {
-                ArtistId = a.ArtistId,
-                Name = a.Name,
-                Wiki = a.Wiki,
-                Biography = a.Biography,
-                Photo = a.Photo
-            })
-            .ToListAsync();
-
-        if (!artists.Any())
+        try
         {
-            return NotFound(new { message = "No artists found" });
-        }
+            var artists = await _context.Artists
+                .Select(a => new ArtistDto
+                {
+                    ArtistId = a.ArtistId,
+                    Name = a.Name,
+                    Wiki = a.Wiki,
+                    Biography = a.Biography,
+                    Photo = a.Photo
+                })
+                .ToListAsync();
 
-        return Ok(artists);
+            if (!artists.Any())
+            {
+                return NotFound(new { message = "No artists found" });
+            }
+
+            return Ok(artists);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while fetching all artists", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -51,36 +58,43 @@ public class ArtistController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ArtistWithSongsDto>> GetArtistById(int id)
     {
-        var artist = await _context.Artists
-            .Include(a => a.Songs)
-            .FirstOrDefaultAsync(a => a.ArtistId == id);
-
-        if (artist == null)
+        try
         {
-            return NotFound(new { message = $"Artist with ID {id} not found" });
-        }
+            var artist = await _context.Artists
+                .Include(a => a.Songs)
+                .FirstOrDefaultAsync(a => a.ArtistId == id);
 
-        var artistDto = new ArtistWithSongsDto
-        {
-            ArtistId = artist.ArtistId,
-            Name = artist.Name,
-            Wiki = artist.Wiki,
-            Biography = artist.Biography,
-            Photo = artist.Photo,
-            Songs = artist.Songs.Select(s => new SongDto
+            if (artist == null)
             {
-                SongId = s.SongId,
-                Titel = s.Titel,
-                ReleaseYear = s.ReleaseYear,
-                ImgUrl = s.ImgUrl,
-                Lyrics = s.Lyrics,
-                Youtube = s.Youtube,
-                ArtistId = s.ArtistId,
-                ArtistName = artist.Name
-            }).ToList()
-        };
+                return NotFound(new { message = $"Artist with ID {id} not found" });
+            }
 
-        return Ok(artistDto);
+            var artistDto = new ArtistWithSongsDto
+            {
+                ArtistId = artist.ArtistId,
+                Name = artist.Name,
+                Wiki = artist.Wiki,
+                Biography = artist.Biography,
+                Photo = artist.Photo,
+                Songs = artist.Songs.Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube,
+                    ArtistId = s.ArtistId,
+                    ArtistName = artist.Name
+                }).ToList()
+            };
+
+            return Ok(artistDto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching artist with ID {id}", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -91,24 +105,31 @@ public class ArtistController : ControllerBase
     [HttpGet("search/{name}")]
     public async Task<ActionResult<IEnumerable<ArtistDto>>> SearchArtists(string name)
     {
-        var artists = await _context.Artists
-            .Where(a => a.Name.Contains(name))
-            .Select(a => new ArtistDto
-            {
-                ArtistId = a.ArtistId,
-                Name = a.Name,
-                Wiki = a.Wiki,
-                Biography = a.Biography,
-                Photo = a.Photo
-            })
-            .ToListAsync();
-
-        if (!artists.Any())
+        try
         {
-            return NotFound(new { message = $"No artists found matching '{name}'" });
-        }
+            var artists = await _context.Artists
+                .Where(a => a.Name.Contains(name))
+                .Select(a => new ArtistDto
+                {
+                    ArtistId = a.ArtistId,
+                    Name = a.Name,
+                    Wiki = a.Wiki,
+                    Biography = a.Biography,
+                    Photo = a.Photo
+                })
+                .ToListAsync();
 
-        return Ok(artists);
+            if (!artists.Any())
+            {
+                return NotFound(new { message = $"No artists found matching '{name}'" });
+            }
+
+            return Ok(artists);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while searching for artists matching '{name}'", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -119,32 +140,39 @@ public class ArtistController : ControllerBase
     [HttpGet("{artistId}/songs")]
     public async Task<ActionResult<IEnumerable<SongDto>>> GetArtistSongs(int artistId)
     {
-        var artist = await _context.Artists.FindAsync(artistId);
-        if (artist == null)
+        try
         {
-            return NotFound(new { message = $"Artist with ID {artistId} not found" });
-        }
-
-        var songs = await _context.Songs
-            .Where(s => s.ArtistId == artistId)
-            .Select(s => new SongDto
+            var artist = await _context.Artists.FindAsync(artistId);
+            if (artist == null)
             {
-                SongId = s.SongId,
-                Titel = s.Titel,
-                ReleaseYear = s.ReleaseYear,
-                ImgUrl = s.ImgUrl,
-                Lyrics = s.Lyrics,
-                Youtube = s.Youtube,
-                ArtistId = s.ArtistId,
-                ArtistName = artist.Name
-            })
-            .ToListAsync();
+                return NotFound(new { message = $"Artist with ID {artistId} not found" });
+            }
 
-        if (!songs.Any())
-        {
-            return NotFound(new { message = $"No songs found for artist ID {artistId}" });
+            var songs = await _context.Songs
+                .Where(s => s.ArtistId == artistId)
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube,
+                    ArtistId = s.ArtistId,
+                    ArtistName = artist.Name
+                })
+                .ToListAsync();
+
+            if (!songs.Any())
+            {
+                return NotFound(new { message = $"No songs found for artist ID {artistId}" });
+            }
+
+            return Ok(songs);
         }
-
-        return Ok(songs);
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching songs for artist ID {artistId}", error = ex.Message });
+        }
     }
 }
