@@ -50,6 +50,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasKey(t => new { t.SongId, t.Year });
 
         builder.Entity<Top2000Entry>()
+            .Property(t => t.Year)
+            .HasColumnType("datetime");
+
+        builder.Entity<Top2000Entry>()
             .HasOne(t => t.Song)
             .WithMany(s => s.Top2000Entries)
             .HasForeignKey(t => t.SongId)
