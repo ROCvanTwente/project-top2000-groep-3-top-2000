@@ -27,12 +27,22 @@ public class Top2000Controller : ControllerBase
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
             .Take(10)
+            .Select(t => new
+            {
+                Entry = t,
+                PreviousYearPosition = _context.Top2000Entries
+                    .Where(prev => prev.SongId == t.SongId && prev.Year == year - 1)
+                    .Select(prev => (int?)prev.Position)
+                    .FirstOrDefault()
+            })
+            .ToList()
             .Select(t => new Top2000EntryDto
             {
-                Position = t.Position,
-                SongId = t.Song!.SongId,
-                Titel = t.Song.Titel,
-                Artist = t.Song.Artist!.Name
+                Position = t.Entry.Position,
+                SongId = t.Entry.Song!.SongId,
+                Titel = t.Entry.Song.Titel,
+                Artist = t.Entry.Song.Artist!.Name,
+                Trend = CalculateTrend(t.Entry.Position, t.PreviousYearPosition)
             })
             .ToList();
 
@@ -55,12 +65,22 @@ public class Top2000Controller : ControllerBase
         var entries = _context.Top2000Entries
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
+            .Select(t => new
+            {
+                Entry = t,
+                PreviousYearPosition = _context.Top2000Entries
+                    .Where(prev => prev.SongId == t.SongId && prev.Year == year - 1)
+                    .Select(prev => (int?)prev.Position)
+                    .FirstOrDefault()
+            })
+            .ToList()
             .Select(t => new Top2000EntryDto
             {
-                Position = t.Position,
-                SongId = t.Song!.SongId,
-                Titel = t.Song.Titel,
-                Artist = t.Song.Artist!.Name
+                Position = t.Entry.Position,
+                SongId = t.Entry.Song!.SongId,
+                Titel = t.Entry.Song.Titel,
+                Artist = t.Entry.Song.Artist!.Name,
+                Trend = CalculateTrend(t.Entry.Position, t.PreviousYearPosition)
             })
             .ToList();
 
@@ -81,22 +101,55 @@ public class Top2000Controller : ControllerBase
     [HttpGet("{position}")]
     public IActionResult GetByPosition(int position, int year = 2024)
     {
-        var entry = _context.Top2000Entries
+        var entryData = _context.Top2000Entries
             .Where(t => t.Position == position && t.Year == year)
-            .Select(t => new Top2000EntryDto
+            .Select(t => new
             {
-                Position = t.Position,
-                SongId = t.Song!.SongId,
-                Titel = t.Song!.Titel,
-                Artist = t.Song.Artist!.Name
+                Entry = t,
+                PreviousYearPosition = _context.Top2000Entries
+                    .Where(prev => prev.SongId == t.SongId && prev.Year == year - 1)
+                    .Select(prev => (int?)prev.Position)
+                    .FirstOrDefault()
             })
             .FirstOrDefault();
 
-        if (entry == null)
+        if (entryData == null)
         {
             return NotFound(new { message = $"No entry found at position {position} for year {year}" });
         }
 
+        var entry = new Top2000EntryDto
+        {
+            Position = entryData.Entry.Position,
+            SongId = entryData.Entry.Song!.SongId,
+            Titel = entryData.Entry.Song!.Titel,
+            Artist = entryData.Entry.Song.Artist!.Name,
+            Trend = CalculateTrend(entryData.Entry.Position, entryData.PreviousYearPosition)
+        };
+
         return Ok(entry);
+    }
+
+    /// <summary>
+    /// Calculates the trend based on current and previous year positions
+    /// </summary>
+    /// <param name="currentPosition">Current year position</param>
+    /// <param name="previousPosition">Previous year position (null if not in list)</param>
+    /// <returns>Positive if song moved up, negative if moved down, 0 if no change or invalid data</returns>
+    private int CalculateTrend(int currentPosition, int? previousPosition)
+    {
+        try
+        {
+            if (!previousPosition.HasValue)
+            {
+                return 0;
+            }
+
+            return previousPosition.Value - currentPosition;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 }
