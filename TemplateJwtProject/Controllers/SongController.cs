@@ -168,9 +168,11 @@ public class SongController : ControllerBase
     {
         try
         {
+            var yearDate = new DateTime(year, 1, 1);
+            
             var songs = await _context.Songs
                 .Include(s => s.Artist)
-                .Where(s => s.ReleaseYear == year)
+                .Where(s => s.ReleaseYear.HasValue && s.ReleaseYear.Value.Year == year)
                 .ToListAsync();
 
             if (!songs.Any())
