@@ -120,7 +120,7 @@ public class Top2000Controller : ControllerBase
     [HttpGet("{position}")]
     public IActionResult GetByPosition(int position, int year = 2024)
     {
-        var entryData = _context.Top2000Entries
+        var entry = _context.Top2000Entries
             .Include(t => t.Song)
                 .ThenInclude(s => s!.Artist)
             .Where(t => t.Position == position && t.Year == year)
@@ -136,19 +136,10 @@ public class Top2000Controller : ControllerBase
             })
             .FirstOrDefault();
 
-        if (entryData == null)
+        if (entry == null)
         {
             return NotFound(new { message = $"No entry found at position {position} for year {year}" });
         }
-
-        var entry = new Top2000EntryDto
-        {
-            Position = entryData.Entry.Position,
-            SongId = entryData.Entry.Song!.SongId,
-            Titel = entryData.Entry.Song!.Titel,
-            Artist = entryData.Entry.Song.Artist!.Name,
-            Trend = CalculateTrend(entryData.Entry.Position, entryData.PreviousYearPosition)
-        };
 
         return Ok(entry);
     }
