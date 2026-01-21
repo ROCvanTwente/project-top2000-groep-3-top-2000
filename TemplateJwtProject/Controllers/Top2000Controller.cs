@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TemplateJwtProject.Data;
 using TemplateJwtProject.Models.DTOs;
 
@@ -52,6 +53,8 @@ public class Top2000Controller : ControllerBase
     public IActionResult GetTop10(int year = 2024)
     {
         var top10 = _context.Top2000Entries
+            .Include(t => t.Song)
+                .ThenInclude(s => s!.Artist)
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
             .Take(10)
@@ -84,6 +87,8 @@ public class Top2000Controller : ControllerBase
     public IActionResult GetByYear(int year)
     {
         var entries = _context.Top2000Entries
+            .Include(t => t.Song)
+                .ThenInclude(s => s!.Artist)
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
             .AsEnumerable()
@@ -115,7 +120,9 @@ public class Top2000Controller : ControllerBase
     [HttpGet("{position}")]
     public IActionResult GetByPosition(int position, int year = 2024)
     {
-        var entry = _context.Top2000Entries
+        var entryData = _context.Top2000Entries
+            .Include(t => t.Song)
+                .ThenInclude(s => s!.Artist)
             .Where(t => t.Position == position && t.Year == year)
             .AsEnumerable()
             .Select(t => new Top2000EntryDto
@@ -129,10 +136,19 @@ public class Top2000Controller : ControllerBase
             })
             .FirstOrDefault();
 
-        if (entry == null)
+        if (entryData == null)
         {
             return NotFound(new { message = $"No entry found at position {position} for year {year}" });
         }
+
+        var entry = new Top2000EntryDto
+        {
+            Position = entryData.Entry.Position,
+            SongId = entryData.Entry.Song!.SongId,
+            Titel = entryData.Entry.Song!.Titel,
+            Artist = entryData.Entry.Song.Artist!.Name,
+            Trend = CalculateTrend(entryData.Entry.Position, entryData.PreviousYearPosition)
+        };
 
         return Ok(entry);
     }

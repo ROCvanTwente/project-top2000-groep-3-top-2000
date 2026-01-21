@@ -46,8 +46,9 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
         // Top2000Entry configuratie - map to existing table
         builder.Entity<Top2000Entry>()
-            .ToTable("Top2000Entries");
-        
+            .ToTable("Top2000Entries")
+            .HasKey(t => new { t.SongId, t.Year });
+
         builder.Entity<Top2000Entry>()
             .HasOne(t => t.Song)
             .WithMany(s => s.Top2000Entries)
