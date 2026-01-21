@@ -16,10 +16,38 @@ public class Top2000Controller : ControllerBase
     }
 
     /// <summary>
+    /// Calculates the trend (position change) from the previous year
+    /// </summary>
+    private int CalculateTrend(int songId, int currentYear)
+    {
+        try
+        {
+            var currentEntry = _context.Top2000Entries
+                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear);
+
+            if (currentEntry == null)
+                return 0;
+
+            var previousYearEntry = _context.Top2000Entries
+                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear - 1);
+
+            if (previousYearEntry == null)
+                return 0;
+
+            // Trend: negative = went down, positive = went up
+            return previousYearEntry.Position - currentEntry.Position;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>
     /// Gets the top 10 songs from the Top 2000 for a specific year
     /// </summary>
     /// <param name="year">The year to retrieve Top 2000 entries for (default: 2024)</param>
-    /// <returns>List of top 10 entries with position, song title, and artist name</returns>
+    /// <returns>List of top 10 entries with position, song title, artist name, and trend</returns>
     [HttpGet("top10")]
     public IActionResult GetTop10(int year = 2024)
     {
@@ -27,12 +55,15 @@ public class Top2000Controller : ControllerBase
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
             .Take(10)
+            .AsEnumerable()
             .Select(t => new Top2000EntryDto
             {
                 Position = t.Position,
-                SongId = t.Song!.SongId,
-                Titel = t.Song.Titel,
-                Artist = t.Song.Artist!.Name
+                Year = t.Year,
+                SongId = t.SongId,
+                Titel = t.Song!.Titel,
+                Artist = t.Song.Artist!.Name,
+                Trend = CalculateTrend(t.SongId, year)
             })
             .ToList();
 
@@ -55,12 +86,15 @@ public class Top2000Controller : ControllerBase
         var entries = _context.Top2000Entries
             .Where(t => t.Year == year)
             .OrderBy(t => t.Position)
+            .AsEnumerable()
             .Select(t => new Top2000EntryDto
             {
                 Position = t.Position,
-                SongId = t.Song!.SongId,
-                Titel = t.Song.Titel,
-                Artist = t.Song.Artist!.Name
+                Year = t.Year,
+                SongId = t.SongId,
+                Titel = t.Song!.Titel,
+                Artist = t.Song.Artist!.Name,
+                Trend = CalculateTrend(t.SongId, year)
             })
             .ToList();
 
@@ -77,18 +111,21 @@ public class Top2000Controller : ControllerBase
     /// </summary>
     /// <param name="position">The position in the Top 2000</param>
     /// <param name="year">The year (default: 2024)</param>
-    /// <returns>Single entry details</returns>
+    /// <returns>Single entry details with trend</returns>
     [HttpGet("{position}")]
     public IActionResult GetByPosition(int position, int year = 2024)
     {
         var entry = _context.Top2000Entries
             .Where(t => t.Position == position && t.Year == year)
+            .AsEnumerable()
             .Select(t => new Top2000EntryDto
             {
                 Position = t.Position,
-                SongId = t.Song!.SongId,
+                Year = t.Year,
+                SongId = t.SongId,
                 Titel = t.Song!.Titel,
-                Artist = t.Song.Artist!.Name
+                Artist = t.Song.Artist!.Name,
+                Trend = CalculateTrend(t.SongId, year)
             })
             .FirstOrDefault();
 

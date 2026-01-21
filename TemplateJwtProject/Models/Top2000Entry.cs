@@ -2,12 +2,10 @@ namespace TemplateJwtProject.Models;
 
 public class Top2000Entry
 {
-    public int Top2000EntryId { get; set; }
-    public int Position { get; set; }
-    public int Year { get; set; }
-    
-    // Foreign key
+    // Composite primary key (SongId, Year)
     public int SongId { get; set; }
+    public int Year { get; set; }
+    public int Position { get; set; }
     
     // Navigation property
     public Song? Song { get; set; }
