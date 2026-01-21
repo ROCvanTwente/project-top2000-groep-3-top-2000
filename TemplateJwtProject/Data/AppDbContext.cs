@@ -38,13 +38,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Song>()
             .ToTable("Songs");
         
-        // Value converter for ReleaseYear: DateTime → int (year) and int → DateTime
-        builder.Entity<Song>()
-            .Property(s => s.ReleaseYear)
-            .HasConversion(
-                v => v.HasValue ? new DateTime(v.Value, 1, 1) : (DateTime?)null,
-                v => v.HasValue ? v.Value.Year : (int?)null);
-        
         builder.Entity<Song>()
             .HasOne(s => s.Artist)
             .WithMany(a => a.Songs)
@@ -55,13 +48,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Top2000Entry>()
             .ToTable("Top2000Entries")
             .HasKey(t => new { t.SongId, t.Year });
-
-        // Value converter for Year: DateTime → int (year) and int → DateTime
-        builder.Entity<Top2000Entry>()
-            .Property(t => t.Year)
-            .HasConversion(
-                v => new DateTime(v, 1, 1),
-                v => v.Year);
 
         builder.Entity<Top2000Entry>()
             .HasOne(t => t.Song)
