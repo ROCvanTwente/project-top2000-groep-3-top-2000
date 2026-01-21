@@ -23,16 +23,23 @@ public class SongController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Song>>> GetAllSongs()
     {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .ToListAsync();
-
-        if (!songs.Any())
+        try
         {
-            return NotFound(new { message = "No songs found" });
-        }
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .ToListAsync();
 
-        return Ok(songs);
+            if (!songs.Any())
+            {
+                return NotFound(new { message = "No songs found" });
+            }
+
+            return Ok(songs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while fetching all songs", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -42,17 +49,24 @@ public class SongController : ControllerBase
     [HttpGet("with-lyrics")]
     public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithLyrics()
     {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.Lyrics != null && s.Lyrics != "")
-            .ToListAsync();
-
-        if (!songs.Any())
+        try
         {
-            return NotFound(new { message = "No songs with lyrics found" });
-        }
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .Where(s => s.Lyrics != null && s.Lyrics != "")
+                .ToListAsync();
 
-        return Ok(songs);
+            if (!songs.Any())
+            {
+                return NotFound(new { message = "No songs with lyrics found" });
+            }
+
+            return Ok(songs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while fetching songs with lyrics", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -62,17 +76,24 @@ public class SongController : ControllerBase
     [HttpGet("with-youtube")]
     public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithYoutube()
     {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.Youtube != null && s.Youtube != "")
-            .ToListAsync();
-
-        if (!songs.Any())
+        try
         {
-            return NotFound(new { message = "No songs with YouTube links found" });
-        }
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .Where(s => s.Youtube != null && s.Youtube != "")
+                .ToListAsync();
 
-        return Ok(songs);
+            if (!songs.Any())
+            {
+                return NotFound(new { message = "No songs with YouTube links found" });
+            }
+
+            return Ok(songs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while fetching songs with YouTube links", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -83,17 +104,24 @@ public class SongController : ControllerBase
     [HttpGet("search/{title}")]
     public async Task<ActionResult<IEnumerable<Song>>> SearchSongs(string title)
     {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.Titel.Contains(title, StringComparison.OrdinalIgnoreCase))
-            .ToListAsync();
-
-        if (!songs.Any())
+        try
         {
-            return NotFound(new { message = $"No songs found matching '{title}'" });
-        }
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .Where(s => s.Titel.Contains(title, StringComparison.OrdinalIgnoreCase))
+                .ToListAsync();
 
-        return Ok(songs);
+            if (!songs.Any())
+            {
+                return NotFound(new { message = $"No songs found matching '{title}'" });
+            }
+
+            return Ok(songs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while searching for songs matching '{title}'", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -104,23 +132,30 @@ public class SongController : ControllerBase
     [HttpGet("artist/{artistId}")]
     public async Task<ActionResult<IEnumerable<Song>>> GetSongsByArtist(int artistId)
     {
-        var artist = await _context.Artists.FindAsync(artistId);
-        if (artist == null)
+        try
         {
-            return NotFound(new { message = $"Artist with ID {artistId} not found" });
+            var artist = await _context.Artists.FindAsync(artistId);
+            if (artist == null)
+            {
+                return NotFound(new { message = $"Artist with ID {artistId} not found" });
+            }
+
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .Where(s => s.ArtistId == artistId)
+                .ToListAsync();
+
+            if (!songs.Any())
+            {
+                return NotFound(new { message = $"No songs found for artist ID {artistId}" });
+            }
+
+            return Ok(songs);
         }
-
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.ArtistId == artistId)
-            .ToListAsync();
-
-        if (!songs.Any())
+        catch (Exception ex)
         {
-            return NotFound(new { message = $"No songs found for artist ID {artistId}" });
+            return StatusCode(500, new { message = $"An error occurred while fetching songs for artist ID {artistId}", error = ex.Message });
         }
-
-        return Ok(songs);
     }
 
     /// <summary>
@@ -131,17 +166,24 @@ public class SongController : ControllerBase
     [HttpGet("by-year/{year}")]
     public async Task<ActionResult<IEnumerable<Song>>> GetSongsByYear(int year)
     {
-        var songs = await _context.Songs
-            .Include(s => s.Artist)
-            .Where(s => s.ReleaseYear == year)
-            .ToListAsync();
-
-        if (!songs.Any())
+        try
         {
-            return NotFound(new { message = $"No songs found from year {year}" });
-        }
+            var songs = await _context.Songs
+                .Include(s => s.Artist)
+                .Where(s => s.ReleaseYear == year)
+                .ToListAsync();
 
-        return Ok(songs);
+            if (!songs.Any())
+            {
+                return NotFound(new { message = $"No songs found from year {year}" });
+            }
+
+            return Ok(songs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching songs from year {year}", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -152,16 +194,23 @@ public class SongController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Song>> GetSongById(int id)
     {
-        var song = await _context.Songs
-            .Include(s => s.Artist)
-            .FirstOrDefaultAsync(s => s.SongId == id);
-
-        if (song == null)
+        try
         {
-            return NotFound(new { message = $"Song with ID {id} not found" });
-        }
+            var song = await _context.Songs
+                .Include(s => s.Artist)
+                .FirstOrDefaultAsync(s => s.SongId == id);
 
-        return Ok(song);
+            if (song == null)
+            {
+                return NotFound(new { message = $"Song with ID {id} not found" });
+            }
+
+            return Ok(song);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching song with ID {id}", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -172,19 +221,26 @@ public class SongController : ControllerBase
     [HttpGet("{id}/lyrics")]
     public async Task<ActionResult<object>> GetSongLyrics(int id)
     {
-        var song = await _context.Songs.FirstOrDefaultAsync(s => s.SongId == id);
-
-        if (song == null)
+        try
         {
-            return NotFound(new { message = $"Song with ID {id} not found" });
-        }
+            var song = await _context.Songs.FirstOrDefaultAsync(s => s.SongId == id);
 
-        if (string.IsNullOrEmpty(song.Lyrics))
+            if (song == null)
+            {
+                return NotFound(new { message = $"Song with ID {id} not found" });
+            }
+
+            if (string.IsNullOrEmpty(song.Lyrics))
+            {
+                return NotFound(new { message = $"No lyrics found for song ID {id}" });
+            }
+
+            return Ok(new { songId = song.SongId, titel = song.Titel, lyrics = song.Lyrics });
+        }
+        catch (Exception ex)
         {
-            return NotFound(new { message = $"No lyrics found for song ID {id}" });
+            return StatusCode(500, new { message = $"An error occurred while fetching lyrics for song ID {id}", error = ex.Message });
         }
-
-        return Ok(new { songId = song.SongId, titel = song.Titel, lyrics = song.Lyrics });
     }
 }
 

@@ -52,30 +52,37 @@ public class Top2000Controller : ControllerBase
     [HttpGet("top10")]
     public IActionResult GetTop10(int year = 2024)
     {
-        var top10 = _context.Top2000Entries
-            .Include(t => t.Song)
-                .ThenInclude(s => s!.Artist)
-            .Where(t => t.Year == year)
-            .OrderBy(t => t.Position)
-            .Take(10)
-            .AsEnumerable()
-            .Select(t => new Top2000EntryDto
-            {
-                Position = t.Position,
-                Year = t.Year,
-                SongId = t.SongId,
-                Titel = t.Song!.Titel,
-                Artist = t.Song.Artist!.Name,
-                Trend = CalculateTrend(t.SongId, year)
-            })
-            .ToList();
-
-        if (!top10.Any())
+        try
         {
-            return NotFound(new { message = $"No Top 2000 entries found for year {year}" });
-        }
+            var top10 = _context.Top2000Entries
+                .Include(t => t.Song)
+                    .ThenInclude(s => s!.Artist)
+                .Where(t => t.Year == year)
+                .OrderBy(t => t.Position)
+                .Take(10)
+                .AsEnumerable()
+                .Select(t => new Top2000EntryDto
+                {
+                    Position = t.Position,
+                    Year = t.Year,
+                    SongId = t.SongId,
+                    Titel = t.Song!.Titel,
+                    Artist = t.Song.Artist!.Name,
+                    Trend = CalculateTrend(t.SongId, year)
+                })
+                .ToList();
 
-        return Ok(top10);
+            if (!top10.Any())
+            {
+                return NotFound(new { message = $"No Top 2000 entries found for year {year}" });
+            }
+
+            return Ok(top10);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while fetching top 10 entries", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -86,29 +93,36 @@ public class Top2000Controller : ControllerBase
     [HttpGet("by-year/{year}")]
     public IActionResult GetByYear(int year)
     {
-        var entries = _context.Top2000Entries
-            .Include(t => t.Song)
-                .ThenInclude(s => s!.Artist)
-            .Where(t => t.Year == year)
-            .OrderBy(t => t.Position)
-            .AsEnumerable()
-            .Select(t => new Top2000EntryDto
-            {
-                Position = t.Position,
-                Year = t.Year,
-                SongId = t.SongId,
-                Titel = t.Song!.Titel,
-                Artist = t.Song.Artist!.Name,
-                Trend = CalculateTrend(t.SongId, year)
-            })
-            .ToList();
-
-        if (!entries.Any())
+        try
         {
-            return NotFound(new { message = $"No Top 2000 entries found for year {year}" });
-        }
+            var entries = _context.Top2000Entries
+                .Include(t => t.Song)
+                    .ThenInclude(s => s!.Artist)
+                .Where(t => t.Year == year)
+                .OrderBy(t => t.Position)
+                .AsEnumerable()
+                .Select(t => new Top2000EntryDto
+                {
+                    Position = t.Position,
+                    Year = t.Year,
+                    SongId = t.SongId,
+                    Titel = t.Song!.Titel,
+                    Artist = t.Song.Artist!.Name,
+                    Trend = CalculateTrend(t.SongId, year)
+                })
+                .ToList();
 
-        return Ok(entries);
+            if (!entries.Any())
+            {
+                return NotFound(new { message = $"No Top 2000 entries found for year {year}" });
+            }
+
+            return Ok(entries);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching entries for year {year}", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -120,27 +134,34 @@ public class Top2000Controller : ControllerBase
     [HttpGet("{position}")]
     public IActionResult GetByPosition(int position, int year = 2024)
     {
-        var entry = _context.Top2000Entries
-            .Include(t => t.Song)
-                .ThenInclude(s => s!.Artist)
-            .Where(t => t.Position == position && t.Year == year)
-            .AsEnumerable()
-            .Select(t => new Top2000EntryDto
-            {
-                Position = t.Position,
-                Year = t.Year,
-                SongId = t.SongId,
-                Titel = t.Song!.Titel,
-                Artist = t.Song.Artist!.Name,
-                Trend = CalculateTrend(t.SongId, year)
-            })
-            .FirstOrDefault();
-
-        if (entry == null)
+        try
         {
-            return NotFound(new { message = $"No entry found at position {position} for year {year}" });
-        }
+            var entry = _context.Top2000Entries
+                .Include(t => t.Song)
+                    .ThenInclude(s => s!.Artist)
+                .Where(t => t.Position == position && t.Year == year)
+                .AsEnumerable()
+                .Select(t => new Top2000EntryDto
+                {
+                    Position = t.Position,
+                    Year = t.Year,
+                    SongId = t.SongId,
+                    Titel = t.Song!.Titel,
+                    Artist = t.Song.Artist!.Name,
+                    Trend = CalculateTrend(t.SongId, year)
+                })
+                .FirstOrDefault();
 
-        return Ok(entry);
+            if (entry == null)
+            {
+                return NotFound(new { message = $"No entry found at position {position} for year {year}" });
+            }
+
+            return Ok(entry);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching entry at position {position} for year {year}", error = ex.Message });
+        }
     }
 }
