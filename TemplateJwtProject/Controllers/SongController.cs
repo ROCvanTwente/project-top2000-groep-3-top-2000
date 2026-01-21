@@ -170,15 +170,18 @@ public class SongController : ControllerBase
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
-                .Where(s => s.ReleaseYear == year)
                 .ToListAsync();
 
-            if (!songs.Any())
+            var filteredSongs = songs
+                .Where(s => s.ReleaseYear == year)
+                .ToList();
+
+            if (!filteredSongs.Any())
             {
                 return NotFound(new { message = $"No songs found from year {year}" });
             }
 
-            return Ok(songs);
+            return Ok(filteredSongs);
         }
         catch (Exception ex)
         {
