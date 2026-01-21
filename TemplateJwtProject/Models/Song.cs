@@ -4,7 +4,7 @@ public class Song
 {
     public int SongId { get; set; }
     public string Titel { get; set; } = string.Empty;
-    public DateTime? ReleaseYear { get; set; }
+    public int? ReleaseYear { get; set; }
     public string? ImgUrl { get; set; }
     public string? Lyrics { get; set; }
     public string? Youtube { get; set; }

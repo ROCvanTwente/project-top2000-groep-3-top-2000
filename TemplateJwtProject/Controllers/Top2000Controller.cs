@@ -24,13 +24,13 @@ public class Top2000Controller : ControllerBase
         try
         {
             var currentEntry = _context.Top2000Entries
-                .FirstOrDefault(t => t.SongId == songId && t.Year.Year == currentYear);
+                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear);
 
             if (currentEntry == null)
                 return 0;
 
             var previousYearEntry = _context.Top2000Entries
-                .FirstOrDefault(t => t.SongId == songId && t.Year.Year == currentYear - 1);
+                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear - 1);
 
             if (previousYearEntry == null)
                 return 0;
@@ -57,14 +57,14 @@ public class Top2000Controller : ControllerBase
             var top10 = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
-                .Where(t => t.Year.Year == year)
+                .Where(t => t.Year == year)
                 .OrderBy(t => t.Position)
                 .Take(10)
                 .AsEnumerable()
                 .Select(t => new Top2000EntryDto
                 {
                     Position = t.Position,
-                    Year = t.Year.Year,
+                    Year = t.Year,
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
@@ -98,13 +98,13 @@ public class Top2000Controller : ControllerBase
             var entries = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
-                .Where(t => t.Year.Year == year)
+                .Where(t => t.Year == year)
                 .OrderBy(t => t.Position)
                 .AsEnumerable()
                 .Select(t => new Top2000EntryDto
                 {
                     Position = t.Position,
-                    Year = t.Year.Year,
+                    Year = t.Year,
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
@@ -139,12 +139,12 @@ public class Top2000Controller : ControllerBase
             var entry = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
-                .Where(t => t.Position == position && t.Year.Year == year)
+                .Where(t => t.Position == position && t.Year == year)
                 .AsEnumerable()
                 .Select(t => new Top2000EntryDto
                 {
                     Position = t.Position,
-                    Year = t.Year.Year,
+                    Year = t.Year,
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,

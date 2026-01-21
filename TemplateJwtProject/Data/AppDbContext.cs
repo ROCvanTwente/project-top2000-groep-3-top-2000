@@ -39,10 +39,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .ToTable("Songs");
         
         builder.Entity<Song>()
-            .Property(s => s.ReleaseYear)
-            .HasColumnType("datetime");
-        
-        builder.Entity<Song>()
             .HasOne(s => s.Artist)
             .WithMany(a => a.Songs)
             .HasForeignKey(s => s.ArtistId)
@@ -52,10 +48,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Top2000Entry>()
             .ToTable("Top2000Entries")
             .HasKey(t => new { t.SongId, t.Year });
-
-        builder.Entity<Top2000Entry>()
-            .Property(t => t.Year)
-            .HasColumnType("datetime");
 
         builder.Entity<Top2000Entry>()
             .HasOne(t => t.Song)
