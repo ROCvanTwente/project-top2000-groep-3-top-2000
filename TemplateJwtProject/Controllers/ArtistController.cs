@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TemplateJwtProject.Data;
 using TemplateJwtProject.Models;
+using TemplateJwtProject.Models.DTOs;
 
 namespace TemplateJwtProject.Controllers;
 
@@ -21,9 +22,18 @@ public class ArtistController : ControllerBase
     /// </summary>
     /// <returns>List of all artists</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Artist>>> GetAllArtists()
+    public async Task<ActionResult<IEnumerable<ArtistDto>>> GetAllArtists()
     {
-        var artists = await _context.Artists.ToListAsync();
+        var artists = await _context.Artists
+            .Select(a => new ArtistDto
+            {
+                ArtistId = a.ArtistId,
+                Name = a.Name,
+                Wiki = a.Wiki,
+                Biography = a.Biography,
+                Photo = a.Photo
+            })
+            .ToListAsync();
 
         if (!artists.Any())
         {
@@ -39,7 +49,7 @@ public class ArtistController : ControllerBase
     /// <param name="id">The artist ID</param>
     /// <returns>Artist details with their songs</returns>
     [HttpGet("{id}")]
-    public async Task<ActionResult<Artist>> GetArtistById(int id)
+    public async Task<ActionResult<ArtistWithSongsDto>> GetArtistById(int id)
     {
         var artist = await _context.Artists
             .Include(a => a.Songs)
@@ -50,7 +60,27 @@ public class ArtistController : ControllerBase
             return NotFound(new { message = $"Artist with ID {id} not found" });
         }
 
-        return Ok(artist);
+        var artistDto = new ArtistWithSongsDto
+        {
+            ArtistId = artist.ArtistId,
+            Name = artist.Name,
+            Wiki = artist.Wiki,
+            Biography = artist.Biography,
+            Photo = artist.Photo,
+            Songs = artist.Songs.Select(s => new SongDto
+            {
+                SongId = s.SongId,
+                Titel = s.Titel,
+                ReleaseYear = s.ReleaseYear,
+                ImgUrl = s.ImgUrl,
+                Lyrics = s.Lyrics,
+                Youtube = s.Youtube,
+                ArtistId = s.ArtistId,
+                ArtistName = artist.Name
+            }).ToList()
+        };
+
+        return Ok(artistDto);
     }
 
     /// <summary>
@@ -59,10 +89,18 @@ public class ArtistController : ControllerBase
     /// <param name="name">The artist name or part of it</param>
     /// <returns>List of artists matching the search term</returns>
     [HttpGet("search/{name}")]
-    public async Task<ActionResult<IEnumerable<Artist>>> SearchArtists(string name)
+    public async Task<ActionResult<IEnumerable<ArtistDto>>> SearchArtists(string name)
     {
         var artists = await _context.Artists
-            .Where(a => a.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            .Where(a => a.Name.Contains(name))
+            .Select(a => new ArtistDto
+            {
+                ArtistId = a.ArtistId,
+                Name = a.Name,
+                Wiki = a.Wiki,
+                Biography = a.Biography,
+                Photo = a.Photo
+            })
             .ToListAsync();
 
         if (!artists.Any())
@@ -79,7 +117,7 @@ public class ArtistController : ControllerBase
     /// <param name="artistId">The artist ID</param>
     /// <returns>List of songs by the artist</returns>
     [HttpGet("{artistId}/songs")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetArtistSongs(int artistId)
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetArtistSongs(int artistId)
     {
         var artist = await _context.Artists.FindAsync(artistId);
         if (artist == null)
@@ -89,6 +127,17 @@ public class ArtistController : ControllerBase
 
         var songs = await _context.Songs
             .Where(s => s.ArtistId == artistId)
+            .Select(s => new SongDto
+            {
+                SongId = s.SongId,
+                Titel = s.Titel,
+                ReleaseYear = s.ReleaseYear,
+                ImgUrl = s.ImgUrl,
+                Lyrics = s.Lyrics,
+                Youtube = s.Youtube,
+                ArtistId = s.ArtistId,
+                ArtistName = artist.Name
+            })
             .ToListAsync();
 
         if (!songs.Any())
