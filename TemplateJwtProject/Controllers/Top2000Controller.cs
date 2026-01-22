@@ -188,4 +188,48 @@ public class Top2000Controller : ControllerBase
             return StatusCode(500, new { message = $"An error occurred while fetching entry at position {position} for year {year}", error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Gets all Top 2000 entries for a specific song across all years
+    /// </summary>
+    /// <param name="songId">The song ID</param>
+    /// <returns>List of all Top 2000 entries for that song, sorted by year descending</returns>
+    [HttpGet("by-song/{songId}")]
+    public IActionResult GetBySong(int songId)
+    {
+        try
+        {
+            var songEntries = _context.Top2000Entries
+                .Include(t => t.Song)
+                    .ThenInclude(s => s!.Artist)
+                .Where(t => t.SongId == songId)
+                .OrderByDescending(t => t.Year)
+                .ToList();
+
+            if (!songEntries.Any())
+            {
+                return NotFound(new { message = $"No Top 2000 entries found for song ID {songId}" });
+            }
+
+            var allEntries = _context.Top2000Entries.ToList();
+
+            var entries = songEntries
+                .Select(t => new Top2000EntryDto
+                {
+                    Position = t.Position,
+                    Year = t.Year,
+                    SongId = t.SongId,
+                    Titel = t.Song!.Titel,
+                    Artist = t.Song.Artist!.Name,
+                    Trend = CalculateTrend(t.SongId, t.Year, allEntries)
+                })
+                .ToList();
+
+            return Ok(entries);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching entries for song ID {songId}", error = ex.Message });
+        }
+    }
 }
