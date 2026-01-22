@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TemplateJwtProject.Data;
+using TemplateJwtProject.Models;
 using TemplateJwtProject.Models.DTOs;
 
 namespace TemplateJwtProject.Controllers;
@@ -19,27 +20,25 @@ public class Top2000Controller : ControllerBase
     /// <summary>
     /// Calculates the trend (position change) from the previous year
     /// </summary>
-    private int CalculateTrend(int songId, int currentYear)
+    private int CalculateTrend(int songId, int currentYear, IEnumerable<Top2000Entry> allEntries)
     {
         try
         {
-            var currentEntry = _context.Top2000Entries
-                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear);
+            var currentEntry = allEntries.FirstOrDefault(t => t.SongId == songId && t.Year == currentYear);
 
-            if (currentEntry == null)
-                return 0;
+            if (currentEntry == null) return 0;
 
-            var previousYearEntry = _context.Top2000Entries
-                .FirstOrDefault(t => t.SongId == songId && t.Year == currentYear - 1);
+            var previousYearEntry = allEntries.FirstOrDefault(t => t.SongId == songId && t.Year == currentYear - 1);
 
-            if (previousYearEntry == null)
-                return 0;
+            if (previousYearEntry == null) return 0;
 
             // Trend: negative = went down, positive = went up
             return previousYearEntry.Position - currentEntry.Position;
         }
         catch
+        (Exception ex)
         {
+            Console.WriteLine($"Error calculating trend for SongId {songId} in year {currentYear}: {ex.Message}");
             return 0;
         }
     }
@@ -54,13 +53,21 @@ public class Top2000Controller : ControllerBase
     {
         try
         {
-            var top10 = _context.Top2000Entries
+            var top10Entries = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
                 .Where(t => t.Year == year)
                 .OrderBy(t => t.Position)
                 .Take(10)
-                .AsEnumerable()
+                .ToList();
+
+            // Load entries for trend calculation only for these song IDs
+            var songIds = top10Entries.Select(t => t.SongId).ToList();
+            var trendEntries = _context.Top2000Entries
+                .Where(t => songIds.Contains(t.SongId) && (t.Year == year || t.Year == year - 1))
+                .ToList();
+
+            var top10 = top10Entries
                 .Select(t => new Top2000EntryDto
                 {
                     Position = t.Position,
@@ -68,7 +75,7 @@ public class Top2000Controller : ControllerBase
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, year)
+                    Trend = CalculateTrend(t.SongId, year, trendEntries)
                 })
                 .ToList();
 
@@ -95,12 +102,20 @@ public class Top2000Controller : ControllerBase
     {
         try
         {
-            var entries = _context.Top2000Entries
+            var yearEntries = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
                 .Where(t => t.Year == year)
                 .OrderBy(t => t.Position)
-                .AsEnumerable()
+                .ToList();
+
+            // Load entries for trend calculation only for these song IDs
+            var songIds = yearEntries.Select(t => t.SongId).ToList();
+            var trendEntries = _context.Top2000Entries
+                .Where(t => songIds.Contains(t.SongId) && (t.Year == year || t.Year == year - 1))
+                .ToList();
+
+            var entries = yearEntries
                 .Select(t => new Top2000EntryDto
                 {
                     Position = t.Position,
@@ -108,7 +123,7 @@ public class Top2000Controller : ControllerBase
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, year)
+                    Trend = CalculateTrend(t.SongId, year, trendEntries)
                 })
                 .ToList();
 
@@ -136,21 +151,30 @@ public class Top2000Controller : ControllerBase
     {
         try
         {
-            var entry = _context.Top2000Entries
+            var positionEntry = _context.Top2000Entries
                 .Include(t => t.Song)
                     .ThenInclude(s => s!.Artist)
-                .Where(t => t.Position == position && t.Year == year)
-                .AsEnumerable()
-                .Select(t => new Top2000EntryDto
-                {
-                    Position = t.Position,
-                    Year = t.Year,
-                    SongId = t.SongId,
-                    Titel = t.Song!.Titel,
-                    Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, year)
-                })
-                .FirstOrDefault();
+                .FirstOrDefault(t => t.Position == position && t.Year == year);
+
+            if (positionEntry == null)
+            {
+                return NotFound(new { message = $"No entry found at position {position} for year {year}" });
+            }
+
+            // Load entries for trend calculation only for this song ID
+            var trendEntries = _context.Top2000Entries
+                .Where(t => t.SongId == positionEntry.SongId && (t.Year == year || t.Year == year - 1))
+                .ToList();
+
+            var entry = new Top2000EntryDto
+            {
+                Position = positionEntry.Position,
+                Year = positionEntry.Year,
+                SongId = positionEntry.SongId,
+                Titel = positionEntry.Song!.Titel,
+                Artist = positionEntry.Song.Artist!.Name,
+                Trend = CalculateTrend(positionEntry.SongId, year, trendEntries)
+            };
 
             if (entry == null)
             {
