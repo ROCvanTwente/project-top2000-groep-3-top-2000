@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TemplateJwtProject.Data;
 using TemplateJwtProject.Models;
+using TemplateJwtProject.Models.DTOs;
 
 namespace TemplateJwtProject.Controllers;
 
@@ -21,12 +22,23 @@ public class SongController : ControllerBase
     /// </summary>
     /// <returns>List of all songs</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Song>>> GetAllSongs()
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetAllSongs()
     {
         try
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -47,13 +59,24 @@ public class SongController : ControllerBase
     /// </summary>
     /// <returns>List of all songs that have lyrics</returns>
     [HttpGet("with-lyrics")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithLyrics()
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetSongsWithLyrics()
     {
         try
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
                 .Where(s => s.Lyrics != null && s.Lyrics != "")
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -74,13 +97,24 @@ public class SongController : ControllerBase
     /// </summary>
     /// <returns>List of all songs that have YouTube links</returns>
     [HttpGet("with-youtube")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsWithYoutube()
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetSongsWithYoutube()
     {
         try
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
                 .Where(s => s.Youtube != null && s.Youtube != "")
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -102,13 +136,24 @@ public class SongController : ControllerBase
     /// <param name="title">The song title or part of it</param>
     /// <returns>List of songs matching the search term</returns>
     [HttpGet("search/{title}")]
-    public async Task<ActionResult<IEnumerable<Song>>> SearchSongs(string title)
+    public async Task<ActionResult<IEnumerable<SongDto>>> SearchSongs(string title)
     {
         try
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
                 .Where(s => s.Titel.Contains(title, StringComparison.OrdinalIgnoreCase))
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -130,7 +175,7 @@ public class SongController : ControllerBase
     /// <param name="artistId">The artist ID</param>
     /// <returns>List of songs by the artist</returns>
     [HttpGet("artist/{artistId}")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsByArtist(int artistId)
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetSongsByArtist(int artistId)
     {
         try
         {
@@ -143,6 +188,17 @@ public class SongController : ControllerBase
             var songs = await _context.Songs
                 .Include(s => s.Artist)
                 .Where(s => s.ArtistId == artistId)
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -164,13 +220,24 @@ public class SongController : ControllerBase
     /// <param name="year">The release year</param>
     /// <returns>List of songs released in that year</returns>
     [HttpGet("by-year/{year}")]
-    public async Task<ActionResult<IEnumerable<Song>>> GetSongsByYear(int year)
+    public async Task<ActionResult<IEnumerable<SongDto>>> GetSongsByYear(int year)
     {
         try
         {
             var songs = await _context.Songs
                 .Include(s => s.Artist)
                 .Where(s => s.ReleaseYear == year)
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
                 .ToListAsync();
 
             if (!songs.Any())
@@ -192,13 +259,25 @@ public class SongController : ControllerBase
     /// <param name="id">The song ID</param>
     /// <returns>Song details with artist information</returns>
     [HttpGet("{id}")]
-    public async Task<ActionResult<Song>> GetSongById(int id)
+    public async Task<ActionResult<SongDto>> GetSongById(int id)
     {
         try
         {
             var song = await _context.Songs
                 .Include(s => s.Artist)
-                .FirstOrDefaultAsync(s => s.SongId == id);
+                .Where(s => s.SongId == id)
+                .Select(s => new SongDto
+                {
+                    SongId = s.SongId,
+                    Titel = s.Titel,
+                    ArtistId = s.ArtistId,
+                    ArtistName = s.Artist!.Name,
+                    ReleaseYear = s.ReleaseYear,
+                    ImgUrl = s.ImgUrl,
+                    Lyrics = s.Lyrics,
+                    Youtube = s.Youtube
+                })
+                .FirstOrDefaultAsync();
 
             if (song == null)
             {
