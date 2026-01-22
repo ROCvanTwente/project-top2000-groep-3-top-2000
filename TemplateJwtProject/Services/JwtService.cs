@@ -25,11 +25,11 @@ public class JwtService : IJwtService
 
     public async Task<string> GenerateTokenAsync(ApplicationUser user)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
+        var jwtSettings = _configuration.GetSection("Jwt");
+        var secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
         var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured");
         var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured");
-        var expiryInMinutes = int.Parse(jwtSettings["ExpiryInMinutes"] ?? "60");
+        var expiryInMinutes = int.Parse(jwtSettings["ExpiryInMinutes"] ?? "15");
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

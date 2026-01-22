@@ -9,12 +9,20 @@ using TemplateJwtProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var logger = LoggerFactory.Create(config => config.AddConsole())
+    .CreateLogger("Program");
 
+logger.LogInformation("Starting Top2000 API application");
+
+// Add services to the container.
+logger.LogInformation("Configuring services...");
 
 // Database configuratie
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+logger.LogInformation("Configuring database with connection string: {ConnectionString}", 
+    connectionString?.Substring(0, Math.Min(50, connectionString?.Length ?? 0)) + "...");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Identity configuratie
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -33,8 +41,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // JWT Authentication configuratie
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
+logger.LogInformation("Configuring JWT authentication");
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -57,8 +66,10 @@ builder.Services.AddAuthentication(options =>
 });
 
 // CORS configuratie
+logger.LogInformation("Configuring CORS");
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
 var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:1234" };
+logger.LogInformation("Allowed CORS origins: {Origins}", string.Join(", ", allowedOrigins));
 
 builder.Services.AddCors(options =>
 {
@@ -72,6 +83,7 @@ builder.Services.AddCors(options =>
 });
 
 // Services
+logger.LogInformation("Registering application services");
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
@@ -84,24 +96,55 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Initialiseer rollen
-//using (var scope = app.Services.CreateScope())
-//{
-//    var services = scope.ServiceProvider;
-//    RoleInitializer.InitializeAsync(services)
-//}
+// Apply database migrations automatically
+logger.LogInformation("Applying database migrations...");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        var scopeLogger = services.GetRequiredService<ILogger<Program>>();
+        scopeLogger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+}
+
+// Initialiseer rollen (ensure roles exist)
+logger.LogInformation("Initializing application roles");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var roles = new[] { "Admin", "User" };
+    foreach (var role in roles)
+    {
+        if (!roleManager.RoleExistsAsync(role).Result)
+        {
+            roleManager.CreateAsync(new IdentityRole(role)).Wait();
+            logger.LogInformation("Created role: {Role}", role);
+        }
+        else
+        {
+            logger.LogInformation("Role already exists: {Role}", role);
+        }
+    }
+    logger.LogInformation("Role initialization completed");
+}
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    //app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("http://top2000api.runasp.net/swagger/v1/swagger.json", "Top2000API V1");
-        c.RoutePrefix = string.Empty; // loads Swagger at root
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Top2000API V1");
+    c.RoutePrefix = string.Empty; // loads Swagger at root
+});
 
 app.UseHttpsRedirection();
 
@@ -113,4 +156,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+logger.LogInformation("Application configuration completed. Starting server...");
 app.Run();
