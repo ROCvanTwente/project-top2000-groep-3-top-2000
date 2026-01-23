@@ -33,7 +33,14 @@ public class ArtistController : ControllerBase
                     Name = a.Name,
                     Wiki = a.Wiki,
                     Biography = a.Biography,
-                    Photo = a.Photo
+                    Photo = a.Photo,
+                    Country = a.Country,
+                    CountryCode = a.CountryCode,
+                    Thumbnail = a.Thumbnail,
+                    Style = a.Style,
+                    Genre = a.Genre,
+                    FormedYear = a.FormedYear,
+                    Members = a.Members
                 })
                 .ToListAsync();
 
@@ -76,6 +83,13 @@ public class ArtistController : ControllerBase
                 Wiki = artist.Wiki,
                 Biography = artist.Biography,
                 Photo = artist.Photo,
+                Country = artist.Country,
+                CountryCode = artist.CountryCode,
+                Thumbnail = artist.Thumbnail,
+                Style = artist.Style,
+                Genre = artist.Genre,
+                FormedYear = artist.FormedYear,
+                Members = artist.Members,
                 Songs = artist.Songs.Select(s => new SongDto
                 {
                     SongId = s.SongId,
@@ -115,7 +129,14 @@ public class ArtistController : ControllerBase
                     Name = a.Name,
                     Wiki = a.Wiki,
                     Biography = a.Biography,
-                    Photo = a.Photo
+                    Photo = a.Photo,
+                    Country = a.Country,
+                    CountryCode = a.CountryCode,
+                    Thumbnail = a.Thumbnail,
+                    Style = a.Style,
+                    Genre = a.Genre,
+                    FormedYear = a.FormedYear,
+                    Members = a.Members
                 })
                 .ToListAsync();
 
