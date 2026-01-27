@@ -14,7 +14,8 @@ public class TestControllerTests
     [Fact]
     public void Get_WhenCalled_ReturnsOk()
     {
-        var controller = new TestController();
+        var context = TestDbContextFactory.CreateContext();
+        var controller = new TestController(context);
 
         var result = controller.Get();
 
@@ -24,7 +25,8 @@ public class TestControllerTests
     [Fact]
     public void UserEndpoint_WithUserRole_ReturnsOk()
     {
-        var controller = new TestController();
+        var context = TestDbContextFactory.CreateContext();
+        var controller = new TestController(context);
         IdentityTestHelpers.SetUser(controller, new[]
         {
             new Claim(ClaimTypes.Role, Roles.User),
@@ -39,7 +41,8 @@ public class TestControllerTests
     [Fact]
     public void AdminEndpoint_WithAdminRole_ReturnsOk()
     {
-        var controller = new TestController();
+        var context = TestDbContextFactory.CreateContext();
+        var controller = new TestController(context);
         IdentityTestHelpers.SetUser(controller, new[]
         {
             new Claim(ClaimTypes.Role, Roles.Admin),

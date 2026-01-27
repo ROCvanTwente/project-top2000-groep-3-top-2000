@@ -68,7 +68,7 @@ builder.Services.AddAuthentication(options =>
     {
         OnAuthenticationFailed = context =>
         {
-            logger.LogError(context.Exception, "JWT validation failed. Token: {Token}", context.HttpContext.Request.Headers["Authorization"]);
+            logger.LogError(context.Exception, "JWT validation failed. Token: {Token}", context.HttpContext.Request.Headers["Authorization"].ToString());
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
