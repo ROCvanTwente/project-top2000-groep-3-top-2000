@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="TemplateJwtProject.Tests/TemplateJwtProject.Tests.csproj" />
   <Project Path="TemplateJwtProject/TemplateJwtProject.csproj" />
 </Solution>
