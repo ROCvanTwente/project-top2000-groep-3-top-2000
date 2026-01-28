@@ -10,4 +10,5 @@ public class Top2000EntryDto
     public int Trend { get; set; } = 0;
     public string? SongImage { get; set; }
     public string? ArtistImage { get; set; }
+    public string? Thumbnail { get; set; }
 }

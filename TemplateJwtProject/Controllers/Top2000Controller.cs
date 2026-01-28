@@ -77,7 +77,8 @@ public class Top2000Controller : ControllerBase
                     Artist = t.Song.Artist!.Name,
                     Trend = CalculateTrend(t.SongId, year, trendEntries),
                     SongImage = t.Song.ImgUrl,
-                    ArtistImage = t.Song.Artist.Photo
+                    ArtistImage = t.Song.Artist.Photo,
+                    Thumbnail = t.Song.Artist.Thumbnail
                 })
                 .ToList();
 
@@ -127,7 +128,8 @@ public class Top2000Controller : ControllerBase
                     Artist = t.Song.Artist!.Name,
                     Trend = CalculateTrend(t.SongId, year, trendEntries),
                     SongImage = t.Song.ImgUrl,
-                    ArtistImage = t.Song.Artist.Photo
+                    ArtistImage = t.Song.Artist.Photo,
+                    Thumbnail = t.Song.Artist.Thumbnail
                 })
                 .ToList();
 
@@ -179,7 +181,8 @@ public class Top2000Controller : ControllerBase
                 Artist = positionEntry.Song.Artist!.Name,
                 Trend = CalculateTrend(positionEntry.SongId, year, trendEntries),
                 SongImage = positionEntry.Song.ImgUrl,
-                ArtistImage = positionEntry.Song.Artist.Photo
+                ArtistImage = positionEntry.Song.Artist.Photo,
+                Thumbnail = positionEntry.Song.Artist.Thumbnail
             };
 
             if (entry == null)
@@ -229,7 +232,8 @@ public class Top2000Controller : ControllerBase
                     Artist = t.Song.Artist!.Name,
                     Trend = CalculateTrend(t.SongId, t.Year, allEntries),
                     SongImage = t.Song.ImgUrl,
-                    ArtistImage = t.Song.Artist.Photo
+                    ArtistImage = t.Song.Artist.Photo,
+                    Thumbnail = t.Song.Artist.Thumbnail
                 })
                 .ToList();
 
