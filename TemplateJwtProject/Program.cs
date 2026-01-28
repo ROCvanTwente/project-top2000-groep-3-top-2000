@@ -64,6 +64,20 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            logger.LogError(context.Exception, "JWT validation failed. Token: {Token}", context.HttpContext.Request.Headers["Authorization"].ToString());
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // CORS configuratie
