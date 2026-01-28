@@ -175,20 +175,20 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("logout-all")]
-    [Authorize]
-    public async Task<IActionResult> LogoutFromAllDevices()
-    {
-        var userId = _userManager.GetUserId(User);
-        
-        if (userId == null)
+        [Authorize]
+        public async Task<IActionResult> LogoutFromAllDevices()
         {
-            return Unauthorized();
+            var userId = _userManager.GetUserId(User);
+        
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            await _refreshTokenService.RevokeAllUserRefreshTokensAsync(userId);
+
+            _logger.LogInformation("User {UserId} logged out from all devices", userId);
+
+            return Ok(new { message = "Logged out from all devices successfully" });
         }
-
-        await _refreshTokenService.RevokeAllUserRefreshTokensAsync(userId);
-
-        _logger.LogInformation("User {UserId} logged out from all devices", userId);
-
-        return Ok(new { message = "Logged out from all devices successfully" });
     }
-}
