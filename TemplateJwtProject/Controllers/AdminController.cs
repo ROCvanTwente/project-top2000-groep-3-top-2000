@@ -16,7 +16,7 @@ public class AdminController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<AdminController> _logger;
-    private readonly AppDbContext? _context;
+    private readonly AppDbContext _context;
 
     public AdminController(
         UserManager<ApplicationUser> userManager,
@@ -28,16 +28,6 @@ public class AdminController : ControllerBase
         _context = context;
     }
 
-    // Added overload to preserve compatibility with tests that construct the controller
-    // without providing an AppDbContext. _context will be null in that case.
-    public AdminController(
-        UserManager<ApplicationUser> userManager,
-        ILogger<AdminController> logger)
-    {
-        _userManager = userManager;
-        _logger = logger;
-        _context = null;
-    }
 
     [HttpPost("assign-role")]
     public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto model)
