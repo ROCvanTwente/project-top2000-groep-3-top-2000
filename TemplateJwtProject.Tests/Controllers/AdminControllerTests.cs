@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TemplateJwtProject.Constants;
 using TemplateJwtProject.Controllers;
+using TemplateJwtProject.Data;
 using TemplateJwtProject.Models;
 using TemplateJwtProject.Models.DTOs;
 using TemplateJwtProject.Tests.Helpers;
@@ -22,7 +23,8 @@ public class AdminControllerTests
         var userManager = IdentityTestHelpers.CreateUserManager();
         userManager.Setup(m => m.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
         var logger = Mock.Of<ILogger<AdminController>>();
-        var controller = new AdminController(userManager.Object, logger);
+        var context = TestDbContextFactory.CreateContext();
+        var controller = new AdminController(userManager.Object, logger, context);
 
         var result = await controller.AssignRole(new AssignRoleDto { Email = "missing@test.com", Role = Roles.User });
 
@@ -36,7 +38,8 @@ public class AdminControllerTests
         var userManager = IdentityTestHelpers.CreateUserManager(new List<ApplicationUser> { user });
         userManager.Setup(m => m.IsInRoleAsync(user, Roles.Admin)).ReturnsAsync(false);
         var logger = Mock.Of<ILogger<AdminController>>();
-        var controller = new AdminController(userManager.Object, logger);
+        var context = TestDbContextFactory.CreateContext();
+        var controller = new AdminController(userManager.Object, logger, context);
 
         var result = await controller.RemoveRole(new AssignRoleDto { Email = user.Email!, Role = Roles.Admin });
 
