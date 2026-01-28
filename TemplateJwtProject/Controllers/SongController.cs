@@ -140,8 +140,11 @@ public class SongController : ControllerBase
     {
         try
         {
-            var songs = await _context.Songs
+            var allSongs = await _context.Songs
                 .Include(s => s.Artist)
+                .ToListAsync();
+
+            var songs = allSongs
                 .Where(s => s.Titel.Contains(title, StringComparison.OrdinalIgnoreCase))
                 .Select(s => new SongDto
                 {
@@ -154,7 +157,7 @@ public class SongController : ControllerBase
                     Lyrics = s.Lyrics,
                     Youtube = s.Youtube
                 })
-                .ToListAsync();
+                .ToList();
 
             if (!songs.Any())
             {
