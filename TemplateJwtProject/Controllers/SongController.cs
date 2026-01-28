@@ -17,6 +17,31 @@ public class SongController : ControllerBase
     }
 
     /// <summary>
+    /// Calculates the trend (position change) from the previous year
+    /// </summary>
+    private int CalculateTrend(int songId, int currentYear, IEnumerable<Top2000Entry> allEntries)
+    {
+        try
+        {
+            var currentEntry = allEntries.FirstOrDefault(t => t.SongId == songId && t.Year == currentYear);
+
+            if (currentEntry == null) return 0;
+
+            var previousYearEntry = allEntries.FirstOrDefault(t => t.SongId == songId && t.Year == currentYear - 1);
+
+            if (previousYearEntry == null) return 0;
+
+            // Trend: negative = went down, positive = went up
+            return previousYearEntry.Position - currentEntry.Position;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calculating trend for SongId {songId} in year {currentYear}: {ex.Message}");
+            return 0;
+        }
+    }
+
+    /// <summary>
     /// Gets all songs
     /// </summary>
     /// <returns>List of all songs</returns>
@@ -210,6 +235,66 @@ public class SongController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"An error occurred while fetching song with ID {id}", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets all Top 2000 positions for a specific song
+    /// </summary>
+    /// <param name="id">The song ID</param>
+    /// <returns>List of all positions the song has been on in the Top 2000</returns>
+    [HttpGet("{id}/positions")]
+    public async Task<ActionResult<IEnumerable<Top2000EntryDto>>> GetSongPositions(int id)
+    {
+        try
+        {
+            // First check if the song exists
+            var song = await _context.Songs
+                .Include(s => s.Artist)
+                .FirstOrDefaultAsync(s => s.SongId == id);
+
+            if (song == null)
+            {
+                return NotFound(new { message = $"Song with ID {id} not found" });
+            }
+
+            // Get all Top 2000 entries for this song
+            var songEntries = await _context.Top2000Entries
+                .Where(t => t.SongId == id)
+                .OrderByDescending(t => t.Year)
+                .ToListAsync();
+
+            if (!songEntries.Any())
+            {
+                return NotFound(new { message = $"No Top 2000 positions found for song ID {id}" });
+            }
+
+            // Load entries for trend calculation (current year and previous year for each entry)
+            var years = songEntries.Select(t => t.Year).ToList();
+            var minYear = years.Min();
+            var maxYear = years.Max();
+            var trendEntries = await _context.Top2000Entries
+                .Where(t => t.SongId == id && t.Year >= minYear - 1 && t.Year <= maxYear)
+                .ToListAsync();
+
+            // Map to DTOs with trend calculation
+            var positions = songEntries
+                .Select(t => new Top2000EntryDto
+                {
+                    Position = t.Position,
+                    Year = t.Year,
+                    SongId = t.SongId,
+                    Titel = song.Titel,
+                    Artist = song.Artist!.Name,
+                    Trend = CalculateTrend(t.SongId, t.Year, trendEntries)
+                })
+                .ToList();
+
+            return Ok(positions);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"An error occurred while fetching positions for song ID {id}", error = ex.Message });
         }
     }
 
