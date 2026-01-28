@@ -75,7 +75,9 @@ public class Top2000Controller : ControllerBase
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, year, trendEntries)
+                    Trend = CalculateTrend(t.SongId, year, trendEntries),
+                    SongImage = t.Song.ImgUrl,
+                    ArtistImage = t.Song.Artist.Photo
                 })
                 .ToList();
 
@@ -123,7 +125,9 @@ public class Top2000Controller : ControllerBase
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, year, trendEntries)
+                    Trend = CalculateTrend(t.SongId, year, trendEntries),
+                    SongImage = t.Song.ImgUrl,
+                    ArtistImage = t.Song.Artist.Photo
                 })
                 .ToList();
 
@@ -173,7 +177,9 @@ public class Top2000Controller : ControllerBase
                 SongId = positionEntry.SongId,
                 Titel = positionEntry.Song!.Titel,
                 Artist = positionEntry.Song.Artist!.Name,
-                Trend = CalculateTrend(positionEntry.SongId, year, trendEntries)
+                Trend = CalculateTrend(positionEntry.SongId, year, trendEntries),
+                SongImage = positionEntry.Song.ImgUrl,
+                ArtistImage = positionEntry.Song.Artist.Photo
             };
 
             if (entry == null)
@@ -221,7 +227,9 @@ public class Top2000Controller : ControllerBase
                     SongId = t.SongId,
                     Titel = t.Song!.Titel,
                     Artist = t.Song.Artist!.Name,
-                    Trend = CalculateTrend(t.SongId, t.Year, allEntries)
+                    Trend = CalculateTrend(t.SongId, t.Year, allEntries),
+                    SongImage = t.Song.ImgUrl,
+                    ArtistImage = t.Song.Artist.Photo
                 })
                 .ToList();
 

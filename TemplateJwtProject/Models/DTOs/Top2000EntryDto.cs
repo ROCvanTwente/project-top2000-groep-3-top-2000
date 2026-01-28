@@ -8,4 +8,6 @@ public class Top2000EntryDto
     public string Titel { get; set; } = string.Empty;
     public string Artist { get; set; } = string.Empty;
     public int Trend { get; set; } = 0;
+    public string? SongImage { get; set; }
+    public string? ArtistImage { get; set; }
 }
