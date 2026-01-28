@@ -83,7 +83,7 @@ builder.Services.AddAuthentication(options =>
 // CORS configuratie
 logger.LogInformation("Configuring CORS");
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
-var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:1234" };
+var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:1234", "project-top2000-frontend-groep-3-to.vercel.app" };
 logger.LogInformation("Allowed CORS origins: {Origins}", string.Join(", ", allowedOrigins));
 
 builder.Services.AddCors(options =>
@@ -193,11 +193,7 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 
 // CORS middleware (voor Authentication en Authorization!)
-app.UseCors(policy => 
-    policy.WithOrigins("https://project-top2000-frontend-groep-3-to.vercel.app")
-          .AllowAnyMethod()
-          .AllowAnyHeader()
-          .AllowCredentials());
+app.UseCors("DefaultCorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
