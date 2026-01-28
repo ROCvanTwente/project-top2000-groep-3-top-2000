@@ -193,7 +193,11 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 
 // CORS middleware (voor Authentication en Authorization!)
-app.UseCors("DefaultCorsPolicy");
+app.UseCors(policy => 
+    policy.WithOrigins("https://project-top2000-frontend-groep-3-to.vercel.app")
+          .AllowAnyMethod()
+          .AllowAnyHeader()
+          .AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();
