@@ -3,17 +3,27 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using TemplateJwtProject.Data;
 using TemplateJwtProject.Models;
 using TemplateJwtProject.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var logger = LoggerFactory.Create(config => config.AddConsole())
+    .CreateLogger("Program");
+
+logger.LogInformation("Starting Top2000 API application");
+
 // Add services to the container.
+logger.LogInformation("Configuring services...");
 
 // Database configuratie
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+logger.LogInformation("Configuring database with connection string: {ConnectionString}", 
+    connectionString?.Substring(0, Math.Min(50, connectionString?.Length ?? 0)) + "...");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Identity configuratie
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -24,7 +34,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
-    
+
     // User settings
     options.User.RequireUniqueEmail = true;
 })
@@ -32,8 +42,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // JWT Authentication configuratie
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
+logger.LogInformation("Configuring JWT authentication");
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -53,11 +64,27 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            logger.LogError(context.Exception, "JWT validation failed. Token: {Token}", context.HttpContext.Request.Headers["Authorization"].ToString());
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // CORS configuratie
+logger.LogInformation("Configuring CORS");
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
-var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:1234" };
+var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:1234", "project-top2000-frontend-groep-3-to.vercel.app" };
+logger.LogInformation("Allowed CORS origins: {Origins}", string.Join(", ", allowedOrigins));
 
 builder.Services.AddCors(options =>
 {
@@ -71,27 +98,97 @@ builder.Services.AddCors(options =>
 });
 
 // Services
+logger.LogInformation("Registering application services");
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+//builder.Services.AddControllers();
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();  // required for Swagger
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Top2000 API", Version = "v1" });
+    
+    // Add JWT Authentication to Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token (without 'Bearer ' prefix)"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Initialiseer rollen
+// Apply database migrations automatically
+logger.LogInformation("Applying database migrations...");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await RoleInitializer.InitializeAsync(services);
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        var scopeLogger = services.GetRequiredService<ILogger<Program>>();
+        scopeLogger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+}
+
+// Initialiseer rollen (ensure roles exist)
+logger.LogInformation("Initializing application roles");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var roles = new[] { "Admin", "User" };
+    foreach (var role in roles)
+    {
+        if (!roleManager.RoleExistsAsync(role).Result)
+        {
+            roleManager.CreateAsync(new IdentityRole(role)).Wait();
+            logger.LogInformation("Created role: {Role}", role);
+        }
+        else
+        {
+            logger.LogInformation("Role already exists: {Role}", role);
+        }
+    }
+    logger.LogInformation("Role initialization completed");
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.MapOpenApi();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Top2000API V1");
+    c.RoutePrefix = string.Empty; // loads Swagger at root
+});
 
 app.UseHttpsRedirection();
 
@@ -103,4 +200,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+logger.LogInformation("Application configuration completed. Starting server...");
 app.Run();

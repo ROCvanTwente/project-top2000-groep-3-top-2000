@@ -17,7 +17,7 @@ namespace TemplateJwtProject.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -220,6 +220,32 @@ namespace TemplateJwtProject.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("TemplateJwtProject.Models.Artist", b =>
+                {
+                    b.Property<int>("ArtistId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArtistId"));
+
+                    b.Property<string>("Biography")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Photo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Wiki")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ArtistId");
+
+                    b.ToTable("Artist", (string)null);
+                });
+
             modelBuilder.Entity("TemplateJwtProject.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -259,6 +285,56 @@ namespace TemplateJwtProject.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Song", b =>
+                {
+                    b.Property<int>("SongId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SongId"));
+
+                    b.Property<int>("ArtistId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImgUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Lyrics")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReleaseYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Youtube")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SongId");
+
+                    b.HasIndex("ArtistId");
+
+                    b.ToTable("Songs", (string)null);
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Top2000Entry", b =>
+                {
+                    b.Property<int>("SongId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.HasKey("SongId", "Year");
+
+                    b.ToTable("Top2000Entries", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -321,6 +397,38 @@ namespace TemplateJwtProject.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Song", b =>
+                {
+                    b.HasOne("TemplateJwtProject.Models.Artist", "Artist")
+                        .WithMany("Songs")
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Artist");
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Top2000Entry", b =>
+                {
+                    b.HasOne("TemplateJwtProject.Models.Song", "Song")
+                        .WithMany("Top2000Entries")
+                        .HasForeignKey("SongId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Song");
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Artist", b =>
+                {
+                    b.Navigation("Songs");
+                });
+
+            modelBuilder.Entity("TemplateJwtProject.Models.Song", b =>
+                {
+                    b.Navigation("Top2000Entries");
                 });
 #pragma warning restore 612, 618
         }
